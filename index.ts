@@ -118,7 +118,7 @@ const TTS = async (): Promise<void> => {
 
 	const runService = async (data: WorkerData): Promise<string> => {
 		return new Promise((resolve: (value: string | PromiseLike<string>) => void, reject: (reason?: any) => void): void => {
-			const worker = new Worker("./worker.js");
+			const worker = new Worker("./worker.ts");
 			worker.onmessage = (msg: MessageEvent<string>): void => { resolve(msg.data); };
 			worker.onerror = (err: ErrorEvent): void => { reject(err); };
 			worker.postMessage(data);

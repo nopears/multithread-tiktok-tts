@@ -3,7 +3,8 @@
 	"module": "index.ts",
 	"type": "module",
 	"scripts": {
-		"build:windows-modern": "bun build --compile --target=bun-windows-x64-modern ./index.ts --outfile AudioGenerator"
+		"build:windows-modern": "bun build --compile --target=bun-windows-x64-modern ./index.ts ./worker.ts --outfile AudioGenerator",
+		"build": "bun build --compile ./index.ts ./worker.ts --outfile AudioGenerator"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
