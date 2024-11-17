@@ -1,6 +1,3 @@
-// main.ts
-
-// @ts-ignore
 import { exists, mkdir } from "node:fs/promises";
 import clear from "clear";
 import readline from 'readline';
@@ -10,6 +7,7 @@ import chalk from "chalk";
 
 const INPUT_FILE_PATH = "input.txt";
 const SESSION_FILE_PATH = "sessionId.txt";
+const MAX_CHUNK_LENGTH = 200;
 
 const rl = readline.createInterface({
 	input: process.stdin,
@@ -46,6 +44,29 @@ const getSessionId = async (choice: number): Promise<string> => {
 	}
 };
 
+const getTextParts = async (text?: string): Promise<string[]> => {
+	return splitTextIntoChunks(text ? text : await Bun.file(INPUT_FILE_PATH).text(), MAX_CHUNK_LENGTH);
+}
+
+const splitTextIntoChunks = (text: string, maxLength: number): string[] => {
+	const chunks: string[] = [];
+	let currentChunk = "";
+
+	for (const word of text.split(' ')) {
+		if ((currentChunk + word).length <= maxLength) {
+			currentChunk += `${word} `;
+		} else {
+			chunks.push(currentChunk.trim());
+			currentChunk = `${word} `;
+		}
+	}
+	if (currentChunk.length > 0) {
+		chunks.push(currentChunk.trim());
+	}
+	return chunks;
+};
+
+
 enum ExitCode {
 	Success = 0,
 	TooLong = 2,
@@ -68,18 +89,22 @@ process.on("exit", (code: number): void => {
 const threads = os.cpus().length
 
 const TTS = async (): Promise<void> => {
-	let choice = Number(await askQuestion("sessionId in\n1: file\n2: prompt\n"));
+	const choice = Number(await askQuestion("sessionId in\n1: file\n2: prompt\n"));
 
 	console.log(chalk.green('-------------------------------------'));
 
-	let sessionId: string = await getSessionId(choice)
+	const sessionId: string = await getSessionId(choice)
 
-	const path = INPUT_FILE_PATH;
-	const file = Bun.file(path);
+	const inputChoice = Number(await askQuestion("text from\n1: file\n2: prompt\n"))
 
-	const text = await file.text();
+	let parts: string[] = []
 
-	let parts = text.split("\n").filter((e: string): boolean => e !== "");
+	if (inputChoice === 2) {
+		parts = await getTextParts(await askQuestion(""))
+
+	} else {
+		parts = await getTextParts()
+	}
 
 	for (let i = 0; i < parts.length; i++) {
 		if (parts[i].length > 200) process.exit(2);

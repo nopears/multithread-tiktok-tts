@@ -16,7 +16,7 @@ self.onmessage = async (event: MessageEvent): Promise<void> => {
 		);
 		self.postMessage(`Worker No.${event.data.i} done!`);
 	} catch (error: unknown) {
-		self.postMessage(`Worker No.${event.data.i} failed`);
+		self.postMessage(`Worker No.${event.data.i} failed :(`);
 	}
 };
 
