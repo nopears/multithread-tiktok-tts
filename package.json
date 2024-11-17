@@ -1,0 +1,20 @@
+{
+	"name": "tts",
+	"module": "index.ts",
+	"type": "module",
+	"scripts": {
+		"build:windows-modern": "bun build --compile --target=bun-windows-x64-modern ./index.ts --outfile AudioGenerator"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/clear": "^0.1.4"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"chalk": "^5.3.0",
+		"clear": "^0.1.0",
+		"tiktok-tts": "^1.1.17"
+	}
+}
