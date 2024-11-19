@@ -1,4 +1,3 @@
-// Declare self as a Worker
 declare var self: Worker;
 
 // Import the text-to-speech module
