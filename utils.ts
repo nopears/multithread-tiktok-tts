@@ -12,7 +12,7 @@ let BASE_URL = 'https://api16-normal-v6.tiktokv.com/media/api/text/speech/invoke
 const DEFAULT_VOICE = 'en_us_001';
 
 export const askQuestion = (question: string): string => {
-	return prompt(question) ?? "No input provided";
+	return prompt(chalk.blue.bold(question)) ?? "No input provided";
 };
 
 const formatResultsAsTable = (results: string[]): void => {
