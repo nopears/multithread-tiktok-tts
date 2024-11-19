@@ -109,7 +109,7 @@ export const TTS = async (): Promise<void> => {
 
 	for (const result of results) {
 		if (result.result) {
-			await appendFile(`output${projectNum}/tts.mp3`, Buffer.from(result.result, 'base64'));
+			await appendFile(`output${projectNum}/audio.mp3`, Buffer.from(result.result, 'base64'));
 		}
 	}
 
