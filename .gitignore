@@ -185,3 +185,5 @@ bun.lockb
 sessionId.txt
 
 input.txt
+
+*.bun-build
