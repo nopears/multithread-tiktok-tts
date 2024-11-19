@@ -38,7 +38,7 @@ const getSessionId = async (choice: number): Promise<string> => {
 };
 
 const getTextParts = async (text?: string): Promise<string[]> => {
-	return splitTextIntoChunks(text ? text : await Bun.file(INPUT_FILE_PATH).text(), MAX_CHUNK_LENGTH);
+	return splitTextIntoChunks(text || await Bun.file(INPUT_FILE_PATH).text(), MAX_CHUNK_LENGTH);
 }
 
 const splitTextIntoChunks = (text: string, maxLength: number): string[] => {
