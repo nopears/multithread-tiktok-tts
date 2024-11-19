@@ -1,5 +1,5 @@
 import readline from 'readline';
-import { exists, mkdir } from "node:fs/promises";
+import { exists, mkdir, writeFile } from "node:fs/promises";
 import os from "os"
 import chalk from "chalk";
 import type { WorkerData } from './types';
@@ -8,6 +8,8 @@ const INPUT_FILE_PATH = "input.txt";
 const SESSION_FILE_PATH = "sessionId.txt";
 const MAX_CHUNK_LENGTH = 200;
 const THREADS = os.cpus().length
+let BASE_URL = 'https://api16-normal-v6.tiktokv.com/media/api/text/speech/invoke';
+const DEFAULT_VOICE = 'en_us_001';
 
 export const rl = readline.createInterface({
 	input: process.stdin,
@@ -130,4 +132,47 @@ export const showMenu = async (): Promise<void> => {
 	console.log('1: TTS');
 	console.log('2: Info generator');
 };
+
+const prepareText = (text: string): string => {
+	text = text.replace('+', 'plus');
+	text = text.replace(/\s/g, '+');
+	text = text.replace('&', 'and');
+	return text;
+}
+
+const handleStatusError = (status_code: number): void => {
+	switch (status_code) {
+		case 1:
+			throw new Error(`Your TikTok session id might be invalid or expired. Try getting a new one. status_code: ${status_code}`);
+		case 2:
+			throw new Error(`The provided text is too long. status_code: ${status_code}`);
+		case 4:
+			throw new Error(`Invalid speaker, please check the list of valid speaker values. status_code: ${status_code}`);
+		case 5:
+			throw new Error(`No session id found. status_code: ${status_code}`);
+		default:
+			throw new Error(`Unknown status code: ${status_code}`);
+	}
+}
+
+
+export const createAudioFromText = async (text: string = '', fileName: string = 'audio.mp3', text_speaker: string = DEFAULT_VOICE, sessionId: string): Promise<void> => {
+	const req_text = prepareText(text);
+	const URL = `${BASE_URL}/?text_speaker=${text_speaker}&req_text=${req_text}&speaker_map_type=0&aid=1233`;
+	const headers = {
+		'User-Agent': 'com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; es_ES; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)',
+		'Cookie': `sessionid=${sessionId}`,
+		'Accept-Encoding': 'gzip,deflate,compress'
+	}
+
+	try {
+		const response = await (await fetch(URL, { method: 'POST', headers })).json();
+		const status_code = response?.status_code;
+		if (status_code !== 0) return handleStatusError(status_code);
+		const encoded_voice = response?.data?.v_str;
+		await writeFile(`${fileName}.mp3`, Buffer.from(encoded_voice, 'base64'));
+	} catch (err) {
+		throw new Error(`tiktok-tts ${err}`);
+	}
+}
 
