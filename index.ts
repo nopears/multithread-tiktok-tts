@@ -1,7 +1,7 @@
 import clear from "clear";
 import { ExitCode } from "./types";
 import chalk from "chalk";
-import { TTS, showMenu, showBanner, askQuestion, rl } from './utils'
+import { TTS, showMenu, showBanner, askQuestion } from './utils';
 
 process.on("exit", (code: number): void => {
 	switch (code) {
@@ -17,29 +17,33 @@ process.on("exit", (code: number): void => {
 });
 
 const main = async (): Promise<void> => {
+	clear()
 	showBanner();
-	while (true) {
+	let continueExecution = true;
+
+	while (continueExecution) {
 		await showMenu();
-		const choice = Number(await askQuestion('Enter your choice: '));
+		const choice = Number(askQuestion('Enter your choice: '));
 		if (choice === 1) {
 			console.log(chalk.green('TTS selected'));
-			await TTS()
+			await TTS();
 		} else if (choice === 2) {
-			console.log(chalk.hex("#754824").bold("WIP"))
+			console.log(chalk.hex("#754824").bold("WIP"));
 		} else {
 			console.log(chalk.red('Invalid choice, please try again.'));
 		}
-		const continueChoice = await askQuestion('Do you want to continue? y/n: ');
+		const continueChoice = askQuestion('Do you want to continue? y/n: ');
 		if (continueChoice.toLowerCase() !== 'y') {
-			break;
+			continueExecution = false;
 		}
 	}
-	rl.close();
+
 	console.log(chalk.green('Bye!'));
+	await Bun.sleep(1000)
 };
 
-await main();
-await Bun.sleep(1000);
-clear();
-process.exit(0)
+main().then(() => {
+	clear();
+	process.exit(ExitCode.Success);
+});
 

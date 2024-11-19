@@ -1,8 +1,8 @@
-import readline from 'readline';
-import { exists, mkdir, writeFile } from "node:fs/promises";
+import { exists, mkdir, appendFile } from "node:fs/promises";
 import os from "os"
 import chalk from "chalk";
 import type { WorkerData } from './types';
+import { ExitCode } from './types';
 
 const INPUT_FILE_PATH = "input.txt";
 const SESSION_FILE_PATH = "sessionId.txt";
@@ -11,17 +11,8 @@ const THREADS = os.cpus().length
 let BASE_URL = 'https://api16-normal-v6.tiktokv.com/media/api/text/speech/invoke';
 const DEFAULT_VOICE = 'en_us_001';
 
-export const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout
-});
-
-export const askQuestion = (question: string): Promise<string> => {
-	return new Promise((resolve: (value: string | PromiseLike<string>) => void): void => {
-		rl.question(chalk.blue.bold(question), (answer: string): void => {
-			resolve(answer);
-		});
-	});
+export const askQuestion = (question: string): string => {
+	return prompt(question) ?? "No input provided";
 };
 
 const formatResultsAsTable = (results: string[]): void => {
@@ -40,7 +31,7 @@ const getSessionId = async (choice: number): Promise<string> => {
 	if (choice === 1) {
 		return await Bun.file(SESSION_FILE_PATH).text();
 	} else if (choice === 2) {
-		return await askQuestion("Enter sessionId: ");
+		return askQuestion("Enter sessionId: ");
 	} else {
 		throw new Error("Invalid choice");
 	}
@@ -68,17 +59,17 @@ const splitTextIntoChunks = (text: string, maxLength: number): string[] => {
 	return chunks;
 };
 
-const runService = async (data: WorkerData): Promise<string> => {
-	return new Promise((resolve: (value: string | PromiseLike<string>) => void, reject: (reason?: any) => void): void => {
+const runService = async (data: WorkerData): Promise<{ index: number; result: string, msg: string }> => {
+	return new Promise((resolve, reject) => {
 		const worker = new Worker("./worker.ts");
-		worker.onmessage = (msg: MessageEvent<string>): void => { resolve(msg.data); };
+		worker.onmessage = (msg: MessageEvent<{ index: number; result: string, msg: string }>): void => { resolve(msg.data); };
 		worker.onerror = (err: ErrorEvent): void => { reject(err); };
 		worker.postMessage(data);
 	});
-}
+};
 
-const createRuns = (parts: string[], number: number, sessionId: string): Promise<string[]> => {
-	const promiseArray: Promise<string>[] = [];
+const createRuns = (parts: string[], number: number, sessionId: string): Promise<{ index: number; result: string, msg: string }[]> => {
+	const promiseArray: Promise<{ index: number; result: string, msg: string }>[] = [];
 	const chunkSize = Math.ceil(parts.length / THREADS);
 	for (let i = 0; i < THREADS; i++) {
 		const chunk = parts.slice(i * chunkSize, (i + 1) * chunkSize);
@@ -87,38 +78,45 @@ const createRuns = (parts: string[], number: number, sessionId: string): Promise
 		}
 	}
 	return Promise.all(promiseArray);
-}
+};
 
 export const TTS = async (): Promise<void> => {
-	const choice = Number(await askQuestion("sessionId in\n1: file\n2: prompt\n"));
+	const choice = Number(askQuestion("sessionId in\n1: file\n2: prompt\n"));
 
 	console.log(chalk.green('-------------------------------------'));
 
 	const sessionId: string = await getSessionId(choice)
 
-	const inputChoice = Number(await askQuestion("text from\n1: file\n2: prompt\n"))
+	const inputChoice = Number(askQuestion("text from\n1: file\n2: prompt\n"))
 
 	let parts: string[] = []
 
 	if (inputChoice === 2) {
-		parts = await getTextParts(await askQuestion(""))
-
+		parts = await getTextParts(askQuestion(""))
 	} else {
 		parts = await getTextParts()
 	}
 
-	for (let i = 0; i < parts.length; i++) {
-		if (parts[i].length > 200) process.exit(2);
-	}
+	const projectNum = askQuestion("Enter project number: ");
 
-	const projectNum = await askQuestion("Enter project number: ");
-
-	if (await exists(`output${projectNum}`)) process.exit(3);
+	if (await exists(`output${projectNum}`)) process.exit(ExitCode.ProjectExists);
 
 	await mkdir(`output${projectNum}`);
 
 	const results = await createRuns(parts, Number(projectNum), sessionId);
-	formatResultsAsTable(results);
+
+	results.sort((a, b) => a.index - b.index);
+
+	for (const result of results) {
+		if (result.result) {
+			await appendFile(`output${projectNum}/tts.mp3`, Buffer.from(result.result, 'base64'));
+		}
+	}
+
+	const resultMessages = results.map(result => result.msg);
+	formatResultsAsTable(resultMessages);
+
+	console.log(chalk.green('TTS process completed.'));
 };
 
 export const showBanner = (): void => {
@@ -155,8 +153,7 @@ const handleStatusError = (status_code: number): void => {
 	}
 }
 
-
-export const createAudioFromText = async (text: string = '', fileName: string = 'audio.mp3', text_speaker: string = DEFAULT_VOICE, sessionId: string): Promise<void> => {
+export const createAudioFromText = async (text: string = '', text_speaker: string = DEFAULT_VOICE, sessionId: string): Promise<string | void> => {
 	const req_text = prepareText(text);
 	const URL = `${BASE_URL}/?text_speaker=${text_speaker}&req_text=${req_text}&speaker_map_type=0&aid=1233`;
 	const headers = {
@@ -169,10 +166,8 @@ export const createAudioFromText = async (text: string = '', fileName: string = 
 		const response = await (await fetch(URL, { method: 'POST', headers })).json();
 		const status_code = response?.status_code;
 		if (status_code !== 0) return handleStatusError(status_code);
-		const encoded_voice = response?.data?.v_str;
-		await writeFile(`${fileName}.mp3`, Buffer.from(encoded_voice, 'base64'));
+		return response?.data?.v_str;
 	} catch (err) {
 		throw new Error(`tiktok-tts ${err}`);
 	}
 }
-
