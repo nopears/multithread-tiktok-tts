@@ -1,8 +1,14 @@
 export interface WorkerData {
-	i: number;
-	part: string;
-	number: number;
-	sessionId: string;
+	i: number
+	part: string
+	number: number
+	sessionId: string
+}
+
+export interface AudioChunk {
+	index: number
+	result: string
+	msg: string
 }
 
 export enum ExitCode {
@@ -10,4 +16,3 @@ export enum ExitCode {
 	TooLong = 2,
 	ProjectExists = 3,
 }
-
