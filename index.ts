@@ -43,7 +43,7 @@ const main = async (): Promise<void> => {
 	await Bun.sleep(1000)
 }
 
-main().then(() => {
+main().then((): never => {
 	clear()
 	process.exit(ExitCode.Success)
 })
