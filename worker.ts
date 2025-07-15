@@ -1,24 +1,52 @@
+/**
+ * TTS Worker
+ * Web Worker for processing TTS requests in parallel
+ */
+
 declare const self: Worker
 
-import { createAudioFromText } from './utils'
+import { TTSApiService } from './src/services/tts-api.service'
+import type { AudioChunk, WorkerData } from './types'
 
-self.onmessage = async (event: MessageEvent): Promise<void> => {
+/**
+ * Handle incoming messages from the main thread
+ */
+self.onmessage = async (event: MessageEvent<WorkerData>): Promise<void> => {
+	const { i: index, part: text, sessionId, voiceCode } = event.data
+
 	try {
-		const data = await createAudioFromText(
-			event.data.part,
-			'en_uk_003',
-			event.data.sessionId,
+		// Process the text chunk using TTS API with selected voice
+		const audioData = await TTSApiService.createAudioFromText(
+			text,
+			sessionId,
+			voiceCode,
 		)
-		self.postMessage({
-			msg: `Worker No.${event.data.i} done!`,
-			index: event.data.i,
-			result: data,
-		})
+
+		// Send success response
+		const response: AudioChunk = {
+			msg: `Worker No.${index} completed successfully!`,
+			index,
+			result: audioData || null,
+		}
+
+		self.postMessage(response)
 	} catch (error: unknown) {
-		self.postMessage({
-			msg: `Worker No.${event.data.i} failed :(`,
-			index: event.data.i,
+		// Send error response
+		const errorMessage =
+			error instanceof Error ? error.message : 'Unknown error'
+		const response: AudioChunk = {
+			msg: `Worker No.${index} failed: ${errorMessage}`,
+			index,
 			result: null,
-		})
+		}
+
+		self.postMessage(response)
 	}
+}
+
+/**
+ * Handle worker errors
+ */
+self.onerror = (error: ErrorEvent): void => {
+	console.error('Worker error:', error)
 }

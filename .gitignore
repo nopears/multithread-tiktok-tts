@@ -187,3 +187,17 @@ sessionId.txt
 input.txt
 
 *.bun-build
+# TTS Generator specific
+output*/
+*.mp3
+sessionId.txt
+input.txt
+AudioGenerator
+AudioGenerator.exe
+
+# Build artifacts
+*.180967f3f4eb77dd-00000000.bun-build
+
+# Temporary files
+.tmp/
+temp/
