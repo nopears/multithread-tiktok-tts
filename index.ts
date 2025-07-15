@@ -8,7 +8,7 @@ import clear from 'clear'
 import { TTSController } from './src/controllers/tts.controller'
 import { BannerUI } from './src/ui/banner'
 import { InputHandlers } from './src/ui/input-handlers'
-import { ExitCode } from './types'
+import { ExitCode } from './src/types/core.types'
 
 /**
  * Application class to manage the main application flow

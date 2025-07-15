@@ -3,7 +3,7 @@
  * Manages a pool of workers for efficient parallel processing
  */
 
-import type { AudioChunk, WorkerData } from '../../types'
+import type { AudioChunk, WorkerData } from '../types/core.types'
 
 interface QueuedTask {
 	data: WorkerData

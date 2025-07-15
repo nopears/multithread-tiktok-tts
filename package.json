@@ -4,8 +4,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun run index.ts",
-		"build:windows-modern": "bun build --compile --target=bun-windows-x64-modern ./index.ts ./worker.ts --outfile AudioGenerator",
-		"build": "bun build --compile ./index.ts ./worker.ts --outfile AudioGenerator",
+		"build:windows-modern": "bun build --compile --target=bun-windows-x64-modern ./index.ts ./src/workers/tts.worker.ts --outfile AudioGenerator",
+		"build": "bun build --compile ./index.ts ./src/workers/tts.worker.ts --outfile AudioGenerator",
 		"build:all": "bun run build && bun run build:windows-modern",
 		"lint": "bunx @biomejs/biome check .",
 		"lint:fix": "bunx @biomejs/biome check --apply .",

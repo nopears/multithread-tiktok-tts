@@ -5,8 +5,8 @@
 
 declare const self: Worker
 
-import { TTSApiService } from './src/services/tts-api.service'
-import type { AudioChunk, WorkerData } from './types'
+import { TTSApiService } from '../services/tts-api.service'
+import type { AudioChunk, WorkerData } from '../types/core.types'
 
 /**
  * Handle incoming messages from the main thread

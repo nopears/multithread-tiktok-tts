@@ -13,7 +13,7 @@ import type {
 	PerformanceMetrics,
 	ProcessingResult,
 	TTSProcessingOptions,
-} from '../../types'
+} from '../types/core.types'
 import { AppConfig } from '../config/app.config'
 import { TTSApiService } from '../services/tts-api.service'
 import { WorkerPoolService } from '../services/worker-pool.service'
@@ -151,7 +151,7 @@ export class TTSController {
 		// Create worker pool with optimal size
 		const workerPool = new WorkerPoolService(
 			Math.min(AppConfig.performance.maxWorkers, options.textChunks.length),
-			'./worker.ts',
+			'./src/workers/tts.worker.ts',
 		)
 
 		try {
